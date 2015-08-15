@@ -88,6 +88,7 @@ class CacheUtil
      * @see withCache
      * @see withCacheControl
      * @see getTimeFromValue
+     * @link https://tools.ietf.org/html/rfc7234#section-5.3
      *
      * @param ResponseInterface $response PSR-7 response to add the header to
      * @param int|string|DateTime $time Time when the representation is expired
@@ -107,6 +108,7 @@ class CacheUtil
      * semantically the same.
      *
      * @see withLastModified
+     * @link https://tools.ietf.org/html/rfc7232#section-2.3
      *
      * @param ResponseInterface $response PSR-7 response to add the header to
      * @param string $eTag ETag to add
@@ -133,6 +135,7 @@ class CacheUtil
      *
      * @see withETag
      * @see getTimeFromValue
+     * @link https://tools.ietf.org/html/rfc7232#section-2.2
      *
      * @param ResponseInterface $response PSR-7 response to add the header to
      * @param int|string|DateTime $time Last modified time
@@ -166,6 +169,8 @@ class CacheUtil
      * - `no-store`: Whether a representation should be stored (Request & Response).
      * - `no-transform`: Whether the payload can be transformed (Request & Response).
      * - `only-if-cached`: Whether only a stored response should be returned (Request only).
+     *
+     * @link https://tools.ietf.org/html/rfc7234#section-5.2
      *
      * @param MessageInterface $message PSR-7 message to add the Cache-Control header to
      * @param array $directives Array with the Cache-Control directives to add
