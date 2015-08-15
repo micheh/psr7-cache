@@ -7,7 +7,10 @@
         "cache",
         "http",
         "psr",
-        "psr-7"
+        "psr-7",
+        "http-message",
+        "request",
+        "response"
     ],
     "require": {
         "php": ">=5.4",
