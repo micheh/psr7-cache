@@ -1,0 +1,24 @@
+{
+    "name": "micheh/psr7-cache",
+    "description": "Cache helpers for PSR-7 HTTP Messages",
+    "type": "library",
+    "license": "BSD-3-Clause",
+    "keywords": [
+        "cache",
+        "http",
+        "psr",
+        "psr-7"
+    ],
+    "require": {
+        "php": ">=5.4",
+        "psr/http-message": "^1.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^4.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Micheh\\Cache\\": "src/"
+        }
+    }
+}
