@@ -306,12 +306,12 @@ class CacheUtil
         $cacheControl = $response->getHeaderLine('Cache-Control');
         if ($cacheControl) {
             $lifetime = $this->getTokenValue($cacheControl, 's-maxage');
-            if ($lifetime) {
+            if ($lifetime !== null) {
                 return (int) $lifetime;
             }
 
             $lifetime = $this->getTokenValue($cacheControl, 'max-age');
-            if ($lifetime) {
+            if ($lifetime !== null) {
                 return (int) $lifetime;
             }
         }

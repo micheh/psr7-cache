@@ -408,6 +408,16 @@ class CacheUtilTest extends \PHPUnit_Framework_TestCase
      * @covers Micheh\Cache\CacheUtil::getLifetime
      * @covers Micheh\Cache\CacheUtil::getTokenValue
      */
+    public function testGetLifetimeWithZero()
+    {
+        $response = $this->getResponseWithHeader('Cache-Control', 's-maxage=0');
+        $this->assertSame(0, $this->cacheUtil->getLifetime($response));
+    }
+
+    /**
+     * @covers Micheh\Cache\CacheUtil::getLifetime
+     * @covers Micheh\Cache\CacheUtil::getTokenValue
+     */
     public function testGetLifetimeWithoutSharedAge()
     {
         $response = $this->getResponseWithHeader('Cache-Control', 'max-age=60, public');
