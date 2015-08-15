@@ -7,10 +7,11 @@ use DateTimeZone;
 use Exception;
 use InvalidArgumentException;
 use Psr\Http\Message\MessageInterface;
+use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 
 /**
- * Util class to add cache headers to PSR-7 HTTP messages.
+ * Util class to add cache headers to PSR-7 HTTP messages and to parse PSR-7 cache headers.
  *
  * @author Michel Hunziker <php@michelhunziker.com>
  * @copyright Copyright (c) 2015, Michel Hunziker <php@michelhunziker.com>
@@ -154,7 +155,7 @@ class CacheUtil
      * (e.g. `must-revalidate`) use `true` to include the directive or `false` to exclude it.
      *
      * Available directives:
-     * - `type`: public or private. Use public to enable shared caches (Request only).
+     * - `type`: public or private. Use public to enable shared caches (Response only).
      * - `max-age`: How many seconds to cache (Request & Response).
      * - `s-maxage`: How many seconds shared caches should cache (Response only).
      * - `max-stale`: How many seconds a stale representation is acceptable (Request only).
@@ -208,6 +209,147 @@ class CacheUtil
     }
 
     /**
+     * Method to check if the response is not modified and the request still has a valid cache, by
+     * comparing the `ETag` headers. If no `ETag` is available and the method is GET or HEAD, the
+     * `Last-Modified` header is used for comparison.
+     *
+     * Returns `true` if the request is not modified and the cache is still valid. In this case the
+     * application should return an empty response with the status code `304`. If the returned
+     * value is `false`, the client either has no cached representation or has an outdated cache.
+     *
+     * @link https://tools.ietf.org/html/rfc7232#section-6
+     *
+     * @param RequestInterface $request Request to check against
+     * @param ResponseInterface $response Response with ETag and/or Last-Modified header
+     * @return bool True if not modified, false if invalid cache
+     */
+    public function isNotModified(RequestInterface $request, ResponseInterface $response)
+    {
+        $eTag = $response->getHeaderLine('ETag');
+        $noneMatch = $request->getHeaderLine('If-None-Match');
+        if ($eTag && $noneMatch) {
+            return $noneMatch === '*' || in_array($eTag, explode(', ', $noneMatch), true);
+        }
+
+        if (!in_array($request->getMethod(), ['GET', 'HEAD'], true)) {
+            return false;
+        }
+
+        $lastModified = $response->getHeaderLine('Last-Modified');
+        $modifiedSince = $request->getHeaderLine('If-Modified-Since');
+
+        return ($lastModified && $modifiedSince && strtotime($modifiedSince) >= strtotime($lastModified));
+    }
+
+    /**
+     * Method to check if a response can be cached by a shared cache. The method will check the
+     * response status and the Cache-Control header. If both checks pass and the response is fresh,
+     * the method will return true and false otherwise.
+     *
+     * @see isFresh
+     * @link https://tools.ietf.org/html/rfc7234#section-3
+     *
+     * @param ResponseInterface $response Response to check if it is cacheable
+     * @return bool True if the response is cacheable by a shared cache and false otherwise
+     */
+    public function isCacheable(ResponseInterface $response)
+    {
+        if (!in_array($response->getStatusCode(), [200, 203, 300, 301, 302, 404, 405, 410], true)) {
+            return false;
+        }
+
+        $cacheControl = $response->getHeaderLine('Cache-Control');
+        if ($cacheControl
+            && (strpos($cacheControl, 'no-store') !== false
+            || strpos($cacheControl, 'private') !== false)
+        ) {
+            return false;
+        }
+
+        return $this->isFresh($response);
+    }
+
+    /**
+     * Method to check if a response is still fresh. This is useful if you want to know if can still
+     * serve a saved response or if you have to create a new response. The method returns true if the
+     * lifetime of the response is available and is greater than the age of the response.
+     *
+     * @see getLifetime
+     * @see getAge
+     * @link https://tools.ietf.org/html/rfc7234#section-4.2
+     *
+     * @param ResponseInterface $response Response to check
+     * @return bool True if the response is still fresh and false otherwise
+     */
+    public function isFresh(ResponseInterface $response)
+    {
+        $lifetime = $this->getLifetime($response);
+        if ($lifetime) {
+            return $lifetime > $this->getAge($response);
+        }
+
+        return false;
+    }
+
+    /**
+     * Returns the lifetime of the provided response (how long the response should be cached once it
+     * is created). The method will lookup the `s-maxage` Cache-Control directive first and fallback
+     * to the `max-age` directive. If both Cache-Control directives are not available, the `Expires`
+     * header is used to compute the lifetime. Returns the lifetime in seconds if available and
+     * `null` if the lifetime cannot be calculated.
+     *
+     * @param ResponseInterface $response Response to get the lifetime from
+     * @return int|null Lifetime in seconds or null if not available
+     */
+    public function getLifetime(ResponseInterface $response)
+    {
+        $cacheControl = $response->getHeaderLine('Cache-Control');
+        if ($cacheControl) {
+            $lifetime = $this->getTokenValue($cacheControl, 's-maxage');
+            if ($lifetime) {
+                return (int) $lifetime;
+            }
+
+            $lifetime = $this->getTokenValue($cacheControl, 'max-age');
+            if ($lifetime) {
+                return (int) $lifetime;
+            }
+        }
+
+        $expires = $response->getHeaderLine('Expires');
+        if ($expires) {
+            $now = $response->getHeaderLine('Date');
+            $now = $now ? strtotime($now) : time();
+            return strtotime($expires) - $now;
+        }
+
+        return null;
+    }
+
+    /**
+     * Returns the age of the response (how long the response is already cached). Uses the `Age`
+     * header to determine the age. If the header is not available, the `Date` header is used
+     * instead. The method will return the age in seconds or `null` if the age cannot be calculated.
+     *
+     * @param ResponseInterface $response Response to get the age from
+     * @return int|null Age in seconds or null if not available
+     */
+    public function getAge(ResponseInterface $response)
+    {
+        $age = $response->getHeaderLine('Age');
+        if ($age !== '') {
+            return (int) $age;
+        }
+
+        $date = $response->getHeaderLine('Date');
+        if ($date) {
+            return max(0, time() - strtotime($date));
+        }
+
+        return null;
+    }
+
+    /**
      * Returns a formatted timestamp of the time parameter, to use in the HTTP headers. The time
      * parameter can be an UNIX timestamp, a parseable string or a DateTime object. If the relative
      * parameter is true and the time parameter is an integer, the time parameter will be added to
@@ -247,5 +389,25 @@ class CacheUtil
         }
 
         return $value  . ' GMT';
+    }
+
+    /**
+     * Returns the value of a directive in the provided header. Example: For the header `max-age=30`
+     * the value for the token `max-age` will be `30`.
+     *
+     * @param string $header Header to search the directive in
+     * @param string $token Directive to fetch
+     * @return string|null
+     */
+    protected function getTokenValue($header, $token)
+    {
+        $index = strpos($header, $token);
+        if ($index !== false) {
+            $index = $index + strlen($token) + 1;
+            $commaIndex = strpos($header, ',', $index);
+            return $commaIndex ? substr($header, $index, $commaIndex - $index) : substr($header, $index);
+        }
+
+        return null;
     }
 }
