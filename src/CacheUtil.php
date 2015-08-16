@@ -244,8 +244,8 @@ class CacheUtil
     /**
      * Method to check if a response can be cached by a shared cache. The method will check if the
      * response status is cacheable and if the Cache-Control header explicitly disallows caching.
-     * The method does NOT check if the response is fresh. If you want to store the response on
-     * the store check both `isCacheable` and `isFresh`.
+     * The method does NOT check if the response is fresh. If you want to store the response on the
+     * application side, check both `isCacheable` and `isFresh`.
      *
      * @see isFresh
      * @link https://tools.ietf.org/html/rfc7234#section-3
