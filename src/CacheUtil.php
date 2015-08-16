@@ -114,7 +114,8 @@ class CacheUtil
      * @param ResponseInterface $response PSR-7 response to add the header to
      * @param string $eTag ETag to add
      * @param bool $weak If the provided ETag is weak
-     * @return MessageInterface
+     * @return ResponseInterface
+     * @throws InvalidArgumentException if the ETag value is not valid
      */
     public function withETag(ResponseInterface $response, $eTag, $weak = false)
     {
