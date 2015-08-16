@@ -384,6 +384,23 @@ class CacheUtilTest extends \PHPUnit_Framework_TestCase
 
         $this->assertFalse($util->isFresh($response));
     }
+    /**
+     * @covers Micheh\Cache\CacheUtil::isFresh
+     */
+    public function testIsFreshWithZeroAge()
+    {
+        $response = $this->getResponse();
+
+        /** @var CacheUtil|\PHPUnit_Framework_MockObject_MockObject $util */
+        $util = $this->getMock('Micheh\Cache\CacheUtil', ['getLifetime', 'getAge']);
+        $util->expects($this->once())->method('getLifetime')
+            ->with($response)->willReturn(0);
+
+        $util->expects($this->once())->method('getAge')
+            ->with($response)->willReturn(0);
+
+        $this->assertFalse($util->isFresh($response));
+    }
 
     /**
      * @covers Micheh\Cache\CacheUtil::isFresh

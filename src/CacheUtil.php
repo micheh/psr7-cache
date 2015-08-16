@@ -284,7 +284,7 @@ class CacheUtil
     public function isFresh(ResponseInterface $response)
     {
         $lifetime = $this->getLifetime($response);
-        if ($lifetime) {
+        if ($lifetime !== null) {
             return $lifetime > $this->getAge($response);
         }
 
