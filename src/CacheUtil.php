@@ -369,6 +369,7 @@ class CacheUtil
             try {
                 $time = new DateTime($time, new DateTimeZone('UTC'));
             } catch (Exception $exception) {
+                // if it is an invalid date string an exception is thrown below
             }
         }
 
@@ -388,7 +389,7 @@ class CacheUtil
             throw new InvalidArgumentException('Could not create a valid date from ' . gettype($time) . '.');
         }
 
-        return $value  . ' GMT';
+        return $value . ' GMT';
     }
 
     /**
