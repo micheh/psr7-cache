@@ -1,7 +1,8 @@
 # Cache helpers for PSR-7 HTTP Messages
 
 [![Build Status](https://secure.travis-ci.org/micheh/psr7-cache.svg?branch=master)](https://secure.travis-ci.org/micheh/psr7-cache)
-[![codecov.io](http://codecov.io/github/micheh/psr7-cache/coverage.svg?branch=master)](http://codecov.io/github/micheh/psr7-cache?branch=master)
+[![Code Coverage](https://scrutinizer-ci.com/g/micheh/psr7-cache/badges/coverage.png?b=master)](https://scrutinizer-ci.com/g/micheh/psr7-cache/?branch=master)
+[![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/micheh/psr7-cache/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/micheh/psr7-cache/?branch=master)
 
 This library provides an easy way to either add cache relevant headers to a PSR-7 HTTP message implementation, or to extract cache information from a PSR-7 message (e.g. if a response is cacheable).
 
