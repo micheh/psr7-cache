@@ -306,17 +306,11 @@ class CacheUtilTest extends \PHPUnit_Framework_TestCase
      */
     public function testIsCacheable()
     {
-        /** @var CacheUtil|\PHPUnit_Framework_MockObject_MockObject $util */
-        $util = $this->getMock('Micheh\Cache\CacheUtil', ['isFresh']);
-
         $response = $this->getResponseWithHeader('Cache-Control', 'public', 1);
         $response->expects($this->once())->method('getStatusCode')
             ->willReturn(200);
 
-        $util->expects($this->once())->method('isFresh')
-            ->with($response)->willReturn('phpunit');
-
-        $this->assertEquals('phpunit', $util->isCacheable($response));
+        $this->assertTrue($this->cacheUtil->isCacheable($response));
     }
 
     /**
@@ -341,6 +335,18 @@ class CacheUtilTest extends \PHPUnit_Framework_TestCase
             ->willReturn(500);
 
         $this->assertFalse($this->cacheUtil->isCacheable($response));
+    }
+
+    /**
+     * @covers Micheh\Cache\CacheUtil::isCacheable
+     */
+    public function testIsCacheableWithoutLifetime()
+    {
+        $response = $this->getResponse();
+        $response->expects($this->once())->method('getStatusCode')
+            ->willReturn(200);
+
+        $this->assertTrue($this->cacheUtil->isCacheable($response));
     }
 
     /**
@@ -391,7 +397,7 @@ class CacheUtilTest extends \PHPUnit_Framework_TestCase
         $util->expects($this->once())->method('getLifetime')
             ->with($response)->willReturn(null);
 
-        $this->assertFalse($util->isFresh($response));
+        $this->assertNull($util->isFresh($response));
     }
 
     /**

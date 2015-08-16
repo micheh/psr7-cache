@@ -242,9 +242,10 @@ class CacheUtil
     }
 
     /**
-     * Method to check if a response can be cached by a shared cache. The method will check the
-     * response status and the Cache-Control header. If both checks pass and the response is fresh,
-     * the method will return true and false otherwise.
+     * Method to check if a response can be cached by a shared cache. The method will check if the
+     * response status is cacheable and if the Cache-Control header explicitly disallows caching.
+     * The method does NOT check if the response is fresh. If you want to store the response on
+     * the store check both `isCacheable` and `isFresh`.
      *
      * @see isFresh
      * @link https://tools.ietf.org/html/rfc7234#section-3
@@ -259,27 +260,26 @@ class CacheUtil
         }
 
         $cacheControl = $response->getHeaderLine('Cache-Control');
-        if ($cacheControl
-            && (strpos($cacheControl, 'no-store') !== false
-            || strpos($cacheControl, 'private') !== false)
-        ) {
-            return false;
+        if (!$cacheControl) {
+            return true;
         }
 
-        return $this->isFresh($response);
+        return strpos($cacheControl, 'no-store') === false && strpos($cacheControl, 'private') === false;
     }
 
     /**
      * Method to check if a response is still fresh. This is useful if you want to know if can still
      * serve a saved response or if you have to create a new response. The method returns true if the
-     * lifetime of the response is available and is greater than the age of the response.
+     * lifetime of the response is available and is greater than the age of the response. If the
+     * method returns false, the response is outdated and should be renewed. In case no lifetime
+     * information is available (no Cache-Control and Expires header), the method returns `null`.
      *
      * @see getLifetime
      * @see getAge
      * @link https://tools.ietf.org/html/rfc7234#section-4.2
      *
      * @param ResponseInterface $response Response to check
-     * @return bool True if the response is still fresh and false otherwise
+     * @return bool|null True if the response is still fresh and false otherwise. Null if unknown
      */
     public function isFresh(ResponseInterface $response)
     {
@@ -288,7 +288,7 @@ class CacheUtil
             return $lifetime > $this->getAge($response);
         }
 
-        return false;
+        return null;
     }
 
     /**
