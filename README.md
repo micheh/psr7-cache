@@ -8,7 +8,7 @@ This library provides an easy way to either add cache relevant headers to a PSR-
 
 ## Installation
 
-Install this library using composer:
+Install this library using [Composer](https://getcomposer.org/):
 
 ```console
 $ composer require micheh/psr7-cache
@@ -26,11 +26,12 @@ $response = $util->withCache($response);
 ```
 
 This will add the header `Cache-Control: private, max-age=600` to your response.
-With this header the response will only be cached by the person who sent the request and will be cached for 600 seconds (10 min).
+With this header the response will only be cached by the client who sent the request and will be cached for 600 seconds (10 min).
+During this time the client should use the response from the cache and should not make a new request to the application.
 
 ### Cache Validators
-After the specified 10 minutes the cache is expired. The client will make a new request to the application and get the newest version.
-You should also add an `ETag` header (and `Last-Modified` header if you know when the resource was last modified) so that the application does not have to send the response again in case the client already has the current version (Cache Validation).
+The application should also add Cache Validators to the response: An `ETag` header (and `Last-Modified` header if you know when the resource was last modified).
+This way the client will also include the `ETag` and `Last-Modified` information in the request and the application can check if the client still has the current version.
 
 ```php
 /** @var \Psr\Http\Message\ResponseInterface $response */
@@ -43,10 +44,11 @@ $response = $util->withLastModified($response, '2015-08-16 16:31:12');
 
 ### Revalidate a response
 To determine if the client still has a current copy of the page and the response is not modified, you can use the `isNotModified` method.
-Add only the cache headers to the response and then compare the request with the response.
-If the response is not modified, return the empty response with a status code 304.
-Keep the code before the `isNotModified` call as lightweight as possible to increase performance.
-Don't create the complete response before the method.
+Add the cache headers to the response and then call the method with both the request and the response.
+If the response is not modified, return the empty response with the cache headers and a status code `304`.
+This will instruct the client to use the cached copy from the previous request, saving you CPU/memory usage and bandwidth.
+Therefore it is important to keep the code before the `isNotModified` call as lightweight as possible to increase performance.
+Don't create the complete response before this method.
 
 ```php
 /** @var \Psr\Http\Message\RequestInterface $request */
@@ -65,7 +67,7 @@ if ($util->isNotModified($request, $response)) {
 ```
 
 
-## Available methods
+## Available helper methods
 
 Method                | Description (see the phpDoc for more information)
 --------------------- | ------------------------------------------------------------------------
