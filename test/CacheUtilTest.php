@@ -5,6 +5,7 @@ namespace MichehTest\Cache;
 use DateTime;
 use DateTimeZone;
 use Micheh\Cache\CacheUtil;
+use Micheh\Cache\Header\ResponseCacheControl;
 use Psr\Http\Message\ResponseInterface;
 use ReflectionMethod;
 
@@ -35,8 +36,11 @@ class CacheUtilTest extends \PHPUnit_Framework_TestCase
         $util = $this->getMock('Micheh\Cache\CacheUtil', ['withCacheControl']);
         $response = $this->getResponse();
 
+        $cacheControl = new ResponseCacheControl();
+        $cacheControl = $cacheControl->withPrivate()->withMaxAge(600);
+
         $util->expects($this->once())->method('withCacheControl')
-            ->with($response, ['type' => 'private', 'max-age' => 600])
+            ->with($response, $cacheControl)
             ->willReturn('phpunit');
 
         $return = $util->withCache($response);
@@ -51,10 +55,12 @@ class CacheUtilTest extends \PHPUnit_Framework_TestCase
         $util = $this->getMock('Micheh\Cache\CacheUtil', ['withCacheControl']);
         $response = $this->getResponse();
 
-        $util->expects($this->once())->method('withCacheControl')
-            ->with($response, ['type' => 'public', 'max-age' => 86400]);
+        $cacheControl = new ResponseCacheControl();
+        $cacheControl = $cacheControl->withPublic()->withMaxAge(86400);
 
-        $util->withCache($response, 'public', 86400);
+        $util->expects($this->once())->method('withCacheControl')->with($response, $cacheControl);
+
+        $util->withCache($response, false, 86400);
     }
 
     /**
@@ -65,8 +71,11 @@ class CacheUtilTest extends \PHPUnit_Framework_TestCase
         $util = $this->getMock('Micheh\Cache\CacheUtil', ['withCacheControl']);
         $response = $this->getResponse();
 
+        $cacheControl = new ResponseCacheControl();
+        $cacheControl = $cacheControl->withNoCache()->withNoStore()->withMustRevalidate();
+
         $util->expects($this->once())->method('withCacheControl')
-            ->with($response, ['no-cache' => true, 'no-store' => true, 'must-revalidate' => true])
+            ->with($response, $cacheControl)
             ->willReturn('phpunit');
 
         $return = $util->withCachePrevention($response);
@@ -80,49 +89,10 @@ class CacheUtilTest extends \PHPUnit_Framework_TestCase
     {
         $response = $this->getResponseWithExpectedHeader('Cache-Control', 'public, max-age=600');
 
-        $return = $this->cacheUtil->withCacheControl($response, ['type' => 'public', 'max-age' => 600]);
-        $this->assertEquals('phpunit', $return);
-    }
+        $cacheControl = new ResponseCacheControl();
+        $cacheControl = $cacheControl->withPublic()->withMaxAge(600);
 
-    /**
-     * @covers Micheh\Cache\CacheUtil::withCacheControl
-     */
-    public function testWithCacheControlInvalidType()
-    {
-        $response = $this->getMock('Psr\Http\Message\ResponseInterface');
-
-        $this->setExpectedException(
-            'InvalidArgumentException',
-            'Invalid cache control type "foo", valid values are "public" and "private".'
-        );
-        $this->cacheUtil->withCacheControl($response, ['type' => 'foo']);
-    }
-
-    /**
-     * @covers Micheh\Cache\CacheUtil::withCacheControl
-     */
-    public function testWithCacheControlInvalidDirective()
-    {
-        $response = $this->getMock('Psr\Http\Message\ResponseInterface');
-
-        $this->setExpectedException(
-            'InvalidArgumentException',
-            'Unknown cache control directive: foo'
-        );
-        $this->cacheUtil->withCacheControl($response, ['foo' => 'bar']);
-    }
-
-    /**
-     * @covers Micheh\Cache\CacheUtil::withCacheControl
-     */
-    public function testWithCacheControlFlag()
-    {
-        $response = $this->getResponseWithExpectedHeader('Cache-Control', 'must-revalidate');
-
-        $return = $this->cacheUtil->withCacheControl(
-            $response,
-            ['must-revalidate' => true, 'no-cache' => false]
-        );
+        $return = $this->cacheUtil->withCacheControl($response, $cacheControl);
         $this->assertEquals('phpunit', $return);
     }
 
@@ -306,9 +276,12 @@ class CacheUtilTest extends \PHPUnit_Framework_TestCase
      */
     public function testIsCacheable()
     {
-        $response = $this->getResponseWithHeader('Cache-Control', 'public', 1);
+        $response = $this->getResponseWithHeader('Cache-Control', 'public', 2);
         $response->expects($this->once())->method('getStatusCode')
             ->willReturn(200);
+
+        $response->expects($this->once())->method('hasHeader')
+            ->with('Cache-Control')->willReturn(true);
 
         $this->assertTrue($this->cacheUtil->isCacheable($response));
     }
@@ -318,9 +291,12 @@ class CacheUtilTest extends \PHPUnit_Framework_TestCase
      */
     public function testIsCacheableWithPrivate()
     {
-        $response = $this->getResponseWithHeader('Cache-Control', 'private', 1);
+        $response = $this->getResponseWithHeader('Cache-Control', 'private', 2);
         $response->expects($this->once())->method('getStatusCode')
             ->willReturn(200);
+
+        $response->expects($this->once())->method('hasHeader')
+            ->with('Cache-Control')->willReturn(true);
 
         $this->assertFalse($this->cacheUtil->isCacheable($response));
     }
@@ -419,37 +395,39 @@ class CacheUtilTest extends \PHPUnit_Framework_TestCase
 
     /**
      * @covers Micheh\Cache\CacheUtil::getLifetime
-     * @covers Micheh\Cache\CacheUtil::getTokenValue
      */
     public function testGetLifetime()
     {
-        $response = $this->getResponseWithHeader('Cache-Control', 'max-age=60, s-maxage=200');
+        $response = $this->getResponseWithHeader('Cache-Control', 'max-age=60, s-maxage=200', 1);
+        $response->expects($this->once())->method('hasHeader')->willReturn(true);
+
         $this->assertSame(200, $this->cacheUtil->getLifetime($response));
     }
 
     /**
      * @covers Micheh\Cache\CacheUtil::getLifetime
-     * @covers Micheh\Cache\CacheUtil::getTokenValue
      */
     public function testGetLifetimeWithZero()
     {
-        $response = $this->getResponseWithHeader('Cache-Control', 's-maxage=0');
+        $response = $this->getResponseWithHeader('Cache-Control', 's-maxage=0', 1);
+        $response->expects($this->once())->method('hasHeader')->willReturn(true);
+
         $this->assertSame(0, $this->cacheUtil->getLifetime($response));
     }
 
     /**
      * @covers Micheh\Cache\CacheUtil::getLifetime
-     * @covers Micheh\Cache\CacheUtil::getTokenValue
      */
     public function testGetLifetimeWithoutSharedAge()
     {
-        $response = $this->getResponseWithHeader('Cache-Control', 'max-age=60, public');
+        $response = $this->getResponseWithHeader('Cache-Control', 'max-age=60, public', 1);
+        $response->expects($this->once())->method('hasHeader')->willReturn(true);
+
         $this->assertSame(60, $this->cacheUtil->getLifetime($response));
     }
 
     /**
      * @covers Micheh\Cache\CacheUtil::getLifetime
-     * @covers Micheh\Cache\CacheUtil::getTokenValue
      */
     public function testGetLifetimeWithExpires()
     {
@@ -512,6 +490,20 @@ class CacheUtilTest extends \PHPUnit_Framework_TestCase
             'Could not create a valid date from string.'
         );
         $method->invoke($this->cacheUtil, 'foo');
+    }
+
+    /**
+     * @covers Micheh\Cache\CacheUtil::getCacheControl
+     */
+    public function testGetCacheControl()
+    {
+        $method = new ReflectionMethod('Micheh\Cache\CacheUtil', 'getCacheControl');
+        $method->setAccessible(true);
+
+        $response = $this->getResponseWithHeader('Cache-Control', 'public');
+
+        $cacheControl = $method->invoke($this->cacheUtil, $response);
+        $this->assertInstanceOf('Micheh\Cache\Header\ResponseCacheControl', $cacheControl);
     }
 
     /**

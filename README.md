@@ -5,6 +5,7 @@
 [![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/micheh/psr7-cache/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/micheh/psr7-cache/?branch=master)
 
 This library provides an easy way to either add cache relevant headers to a PSR-7 HTTP message implementation, or to extract cache information from a PSR-7 message (e.g. if a response is cacheable).
+It also provides a `Cache-Control` value object to provide an object oriented interface for the manipulation of the `Cache-Control` header.
 
 
 ## Installation
@@ -77,7 +78,7 @@ Method                | Description (see the phpDoc for more information)
 `withExpires`         | Adds an `Expires` header (date can be absolute or relative)
 `withETag`            | Adds an `ETag` header
 `withLastModified`    | Adds a `Last-Modified` header (date can be absolute or relative)
-`withCacheControl`    | Adds a `Cache-Control` header with the provided directives (from array)
+`withCacheControl`    | Adds a `Cache-Control` header with the directives (from string or object)
 `isNotModified`       | Checks if a response is not modified
 `isCacheable`         | Checks if a response is cacheable by a public cache
 `isFresh`             | Checks if a response is fresh (age smaller than lifetime)

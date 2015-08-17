@@ -6,6 +6,8 @@ use DateTime;
 use DateTimeZone;
 use Exception;
 use InvalidArgumentException;
+use Micheh\Cache\Header\CacheControl;
+use Micheh\Cache\Header\ResponseCacheControl;
 use Psr\Http\Message\MessageInterface;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -20,32 +22,10 @@ use Psr\Http\Message\ResponseInterface;
 class CacheUtil
 {
     /**
-     * @var array Allowed directives for Cache-Control
-     */
-    private static $allowedDirectives = [
-        'token' => [
-            'max-age' => true,
-            's-maxage' => true,
-            'max-stale' => true,
-            'min-fresh' => true,
-            'stale-while-revalidate' => true,
-            'stale-if-error' => true,
-        ],
-        'flag' => [
-            'must-revalidate' => true,
-            'proxy-revalidate' => true,
-            'no-cache' => true,
-            'no-store' => true,
-            'no-transform' => true,
-            'only-if-cached' => true,
-        ],
-    ];
-
-    /**
      * Method to add a Cache-Control header to a PSR-7 response, which should enable caching.
-     * Use the type `public` to enable shared caches to cache the response or use `private`
-     * otherwise. With the `$maxAge` parameter you can specify how many seconds a response should
-     * be cached.
+     * Set the `private` parameter to false to enable shared caches to cache the response (for
+     * example when the response is usable by everyone and does not contain individual information).
+     * With the `$maxAge` parameter you can specify how many seconds a response should be cached.
      *
      * By default this method specifies a `private` cache, which caches for 10 minutes. For more
      * options use the `withCacheControl` method.
@@ -53,14 +33,18 @@ class CacheUtil
      * @see withCacheControl
      *
      * @param ResponseInterface $response PSR-7 response to add the header to
-     * @param string $type public or private. Default: private
+     * @param bool $private True for private, false for public
      * @param int $maxAge How many seconds the response should be cached. Default: 600 (10 min)
      * @return ResponseInterface
      * @throws InvalidArgumentException If the type is invalid
      */
-    public function withCache(ResponseInterface $response, $type = 'private', $maxAge = 600)
+    public function withCache(ResponseInterface $response, $private = true, $maxAge = 600)
     {
-        return $this->withCacheControl($response, ['type' => $type, 'max-age' => $maxAge]);
+        $cacheControl = new ResponseCacheControl();
+        $cacheControl = $private ? $cacheControl->withPrivate() : $cacheControl->withPublic();
+        $cacheControl = $cacheControl->withMaxAge($maxAge);
+
+        return $this->withCacheControl($response, $cacheControl);
     }
 
     /**
@@ -75,10 +59,10 @@ class CacheUtil
      */
     public function withCachePrevention(ResponseInterface $response)
     {
-        return $this->withCacheControl(
-            $response,
-            ['no-cache' => true, 'no-store' => true, 'must-revalidate' => true]
-        );
+        $cacheControl = new ResponseCacheControl();
+        $cacheControl = $cacheControl->withNoCache()->withNoStore()->withMustRevalidate();
+
+        return $this->withCacheControl($response, $cacheControl);
     }
 
     /**
@@ -151,62 +135,19 @@ class CacheUtil
     }
 
     /**
-     * Method to add a Cache-Control header to a provided PSR-7 message. The directives array
-     * should be an associative array with the directive as key. For directives which are flags
-     * (e.g. `must-revalidate`) use `true` to include the directive or `false` to exclude it.
-     *
-     * Available directives:
-     * - `type`: public or private. Use public to enable shared caches (Response only).
-     * - `max-age`: How many seconds to cache (Request & Response).
-     * - `s-maxage`: How many seconds shared caches should cache (Response only).
-     * - `max-stale`: How many seconds a stale representation is acceptable (Request only).
-     * - `min-fresh`: How many seconds a representation should still be fresh (Request only).
-     * - `stale-while-revalidate`: How many seconds a stale representation can be used while
-     *   revalidating in the background (Response only).
-     * - `stale-if-error`: How many seconds a stale representation can be used in the case of an
-     *   error (Response only).
-     * - `must-revalidate`: Whether a stale representation should be validated (Response only).
-     * - `proxy-revalidate`: Whether a public cache should validate a stale representation (Response only).
-     * - `no-cache`: Whether a representation should be cached (Request & Response).
-     * - `no-store`: Whether a representation should be stored (Request & Response).
-     * - `no-transform`: Whether the payload can be transformed (Request & Response).
-     * - `only-if-cached`: Whether only a stored response should be returned (Request only).
+     * Method to add a Cache-Control header to the provided PSR-7 message. The cache control
+     * parameter can either be a string or a Cache-Control object.
      *
      * @link https://tools.ietf.org/html/rfc7234#section-5.2
      *
      * @param MessageInterface $message PSR-7 message to add the Cache-Control header to
-     * @param array $directives Array with the Cache-Control directives to add
+     * @param string|CacheControl $cacheControl Cache-Control string or object
      * @return MessageInterface The PSR-7 message with the added Cache-Control header
-     * @throws InvalidArgumentException If the type is invalid or an unknown directive is used
+     * @throws InvalidArgumentException If the Cache-Control header is invalid
      */
-    public function withCacheControl(MessageInterface $message, array $directives)
+    public function withCacheControl(MessageInterface $message, $cacheControl)
     {
-        $headerParts = [];
-
-        foreach ($directives as $directive => $value) {
-            if ($directive === 'type') {
-                if ($value !== 'public' && $value !== 'private') {
-                    throw new InvalidArgumentException(sprintf(
-                        'Invalid cache control type "%s", valid values are "public" and "private".',
-                        $value
-                    ));
-                }
-            } elseif (isset(self::$allowedDirectives['token'][$directive])) {
-                $value = $directive . '=' . (int) $value;
-            } elseif (isset(self::$allowedDirectives['flag'][$directive])) {
-                if (!$value) {
-                    continue;
-                }
-
-                $value = $directive;
-            } else {
-                throw new InvalidArgumentException('Unknown cache control directive: ' . $directive);
-            }
-
-            $headerParts[] = $value;
-        }
-
-        return $message->withHeader('Cache-Control', implode(', ', $headerParts));
+        return $message->withHeader('Cache-Control', (string) $cacheControl);
     }
 
     /**
@@ -260,12 +201,12 @@ class CacheUtil
             return false;
         }
 
-        $cacheControl = $response->getHeaderLine('Cache-Control');
-        if (!$cacheControl) {
+        if (!$response->hasHeader('Cache-Control')) {
             return true;
         }
 
-        return strpos($cacheControl, 'no-store') === false && strpos($cacheControl, 'private') === false;
+        $cacheControl = $this->getCacheControl($response);
+        return !$cacheControl->hasNoStore() && !$cacheControl->isPrivate();
     }
 
     /**
@@ -304,14 +245,15 @@ class CacheUtil
      */
     public function getLifetime(ResponseInterface $response)
     {
-        $cacheControl = $response->getHeaderLine('Cache-Control');
-        if ($cacheControl) {
-            $lifetime = $this->getTokenValue($cacheControl, 's-maxage');
+        if ($response->hasHeader('Cache-Control')) {
+            $cacheControl = $this->getCacheControl($response);
+
+            $lifetime = $cacheControl->getSharedMaxAge();
             if ($lifetime !== null) {
                 return (int) $lifetime;
             }
 
-            $lifetime = $this->getTokenValue($cacheControl, 'max-age');
+            $lifetime = $cacheControl->getMaxAge();
             if ($lifetime !== null) {
                 return (int) $lifetime;
             }
@@ -394,22 +336,13 @@ class CacheUtil
     }
 
     /**
-     * Returns the value of a directive in the provided header. Example: For the header `max-age=30`
-     * the value for the token `max-age` will be `30`.
+     * Parses the Cache-Control header of a response and returns the Cache-Control object.
      *
-     * @param string $header Header to search the directive in
-     * @param string $token Directive to fetch
-     * @return string|null
+     * @param ResponseInterface $response
+     * @return ResponseCacheControl
      */
-    protected function getTokenValue($header, $token)
+    protected function getCacheControl(ResponseInterface $response)
     {
-        $index = strpos($header, $token);
-        if ($index !== false) {
-            $index = $index + strlen($token) + 1;
-            $commaIndex = strpos($header, ',', $index);
-            return $commaIndex ? substr($header, $index, $commaIndex - $index) : substr($header, $index);
-        }
-
-        return null;
+        return ResponseCacheControl::fromString($response->getHeaderLine('Cache-Control'));
     }
 }
