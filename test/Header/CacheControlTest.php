@@ -81,6 +81,15 @@ class CacheControlTest extends CacheControlTestCase
     /**
      * @covers Micheh\Cache\Header\CacheControl::withDirective
      */
+    public function testWithDirectiveWithNegativeInt()
+    {
+        $clone = $this->cacheControl->withDirective('foo', -200);
+        $this->assertAttributeSame(['foo' => 0], 'directives', $clone);
+    }
+
+    /**
+     * @covers Micheh\Cache\Header\CacheControl::withDirective
+     */
     public function testWithDirectiveWithNull()
     {
         $clone = $this->cacheControl->withDirective('foo', 'bar')->withDirective('foo', null);

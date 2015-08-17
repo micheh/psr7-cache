@@ -240,6 +240,10 @@ abstract class CacheControl
         $clone = clone($this);
 
         if ($value !== null) {
+            if (is_int($value) && $value < 0) {
+                $value = 0;
+            }
+
             $clone->directives[$name] = $value;
             return $clone;
         }
