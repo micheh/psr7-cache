@@ -57,7 +57,7 @@ abstract class CacheControl
             $directive = trim($directive);
             $method = self::getMethod($directive);
 
-            if (!$method && $value === true) {
+            if ($method === null && $value === true) {
                 // Ignore unknown flag
                 continue;
             }
