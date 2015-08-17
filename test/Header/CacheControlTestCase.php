@@ -63,26 +63,12 @@ class CacheControlTestCase extends \PHPUnit_Framework_TestCase
 
     /**
      * @param string $name
-     * @param bool $value
-     * @return \PHPUnit_Framework_MockObject_MockObject
-     */
-    protected function getControlWithFlag($name, $value)
-    {
-        $control = $this->getMock($this->controlClass, ['withFlag']);
-        $control->expects($this->once())->method('withFlag')
-            ->with($name, $value)->willReturn('phpunit');
-
-        return $control;
-    }
-
-    /**
-     * @param string $name
      * @return \PHPUnit_Framework_MockObject_MockObject
      */
     protected function getControlWithHasFlag($name)
     {
-        $control = $this->getMock($this->controlClass, ['hasFlag']);
-        $control->expects($this->once())->method('hasFlag')
+        $control = $this->getMock($this->controlClass, ['hasDirective']);
+        $control->expects($this->once())->method('hasDirective')
             ->with($name)->willReturn('phpunit');
 
         return $control;

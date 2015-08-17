@@ -66,7 +66,7 @@ class RequestCacheControl extends CacheControl
      */
     public function withOnlyIfCached($flag = true)
     {
-        return $this->withFlag('only-if-cached', $flag);
+        return $this->withDirective('only-if-cached', (bool) $flag);
     }
 
     /**
@@ -74,6 +74,6 @@ class RequestCacheControl extends CacheControl
      */
     public function hasOnlyIfCached()
     {
-        return $this->hasFlag('only-if-cached');
+        return $this->hasDirective('only-if-cached');
     }
 }

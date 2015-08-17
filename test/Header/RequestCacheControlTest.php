@@ -55,7 +55,7 @@ class RequestCacheControlTest extends CacheControlTestCase
      */
     public function testWithOnlyIfCached()
     {
-        $control = $this->getControlWithFlag('only-if-cached', true);
+        $control = $this->getControlWithDirective('only-if-cached', true);
         $this->assertReturn($control->withOnlyIfCached(true));
     }
 

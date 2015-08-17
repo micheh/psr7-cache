@@ -23,6 +23,7 @@ class ResponseCacheControlTest extends CacheControlTestCase
 
     /**
      * @covers Micheh\Cache\Header\ResponseCacheControl::withPublic
+     * @covers Micheh\Cache\Header\ResponseCacheControl::withPublicPrivate
      */
     public function testWithPublic()
     {
@@ -32,6 +33,7 @@ class ResponseCacheControlTest extends CacheControlTestCase
 
     /**
      * @covers Micheh\Cache\Header\ResponseCacheControl::withPrivate
+     * @covers Micheh\Cache\Header\ResponseCacheControl::withPublicPrivate
      */
     public function testWithPrivate()
     {
@@ -42,6 +44,7 @@ class ResponseCacheControlTest extends CacheControlTestCase
     /**
      * @covers Micheh\Cache\Header\ResponseCacheControl::withPublic
      * @covers Micheh\Cache\Header\ResponseCacheControl::withPrivate
+     * @covers Micheh\Cache\Header\ResponseCacheControl::withPublicPrivate
      */
     public function testWithPublicOverridesPrivate()
     {
@@ -52,6 +55,7 @@ class ResponseCacheControlTest extends CacheControlTestCase
     /**
      * @covers Micheh\Cache\Header\ResponseCacheControl::withPublic
      * @covers Micheh\Cache\Header\ResponseCacheControl::withPrivate
+     * @covers Micheh\Cache\Header\ResponseCacheControl::withPublicPrivate
      */
     public function testWithPrivateOverridesPublic()
     {
@@ -62,6 +66,7 @@ class ResponseCacheControlTest extends CacheControlTestCase
     /**
      * @covers Micheh\Cache\Header\ResponseCacheControl::withPublic
      * @covers Micheh\Cache\Header\ResponseCacheControl::withPrivate
+     * @covers Micheh\Cache\Header\ResponseCacheControl::withPublicPrivate
      */
     public function testWithPublicDoesNotOverwriteFalse()
     {
@@ -146,7 +151,7 @@ class ResponseCacheControlTest extends CacheControlTestCase
      */
     public function testWithMustRevalidate()
     {
-        $control = $this->getControlWithFlag('must-revalidate', true);
+        $control = $this->getControlWithDirective('must-revalidate', true);
         $this->assertReturn($control->withMustRevalidate(true));
     }
 
@@ -164,7 +169,7 @@ class ResponseCacheControlTest extends CacheControlTestCase
      */
     public function testWithProxyRevalidate()
     {
-        $control = $this->getControlWithFlag('proxy-revalidate', true);
+        $control = $this->getControlWithDirective('proxy-revalidate', true);
         $this->assertReturn($control->withProxyRevalidate(true));
     }
 

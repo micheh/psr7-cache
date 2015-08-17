@@ -33,12 +33,7 @@ class ResponseCacheControl extends CacheControl
      */
     public function withPublic($flag = true)
     {
-        $clone = $this->withFlag('public', $flag);
-        if ($flag && $clone->hasFlag('private')) {
-            $clone = $clone->withFlag('private', false);
-        }
-
-        return $clone;
+        return $this->withPublicPrivate(true, $flag);
     }
 
     /**
@@ -46,7 +41,7 @@ class ResponseCacheControl extends CacheControl
      */
     public function isPublic()
     {
-        return $this->hasFlag('public');
+        return $this->hasDirective('public');
     }
 
     /**
@@ -58,12 +53,7 @@ class ResponseCacheControl extends CacheControl
      */
     public function withPrivate($flag = true)
     {
-        $clone = $this->withFlag('private', $flag);
-        if ($flag && $clone->hasFlag('public')) {
-            $clone = $clone->withFlag('public', false);
-        }
-
-        return $clone;
+        return $this->withPublicPrivate(false, $flag);
     }
 
     /**
@@ -71,7 +61,7 @@ class ResponseCacheControl extends CacheControl
      */
     public function isPrivate()
     {
-        return $this->hasFlag('private');
+        return $this->hasDirective('private');
     }
 
     /**
@@ -140,7 +130,7 @@ class ResponseCacheControl extends CacheControl
      */
     public function withMustRevalidate($flag = true)
     {
-        return $this->withFlag('must-revalidate', $flag);
+        return $this->withDirective('must-revalidate', (bool) $flag);
     }
 
     /**
@@ -148,7 +138,7 @@ class ResponseCacheControl extends CacheControl
      */
     public function hasMustRevalidate()
     {
-        return $this->hasFlag('must-revalidate');
+        return $this->hasDirective('must-revalidate');
     }
 
     /**
@@ -159,7 +149,7 @@ class ResponseCacheControl extends CacheControl
      */
     public function withProxyRevalidate($flag = true)
     {
-        return $this->withFlag('proxy-revalidate', $flag);
+        return $this->withDirective('proxy-revalidate', (bool) $flag);
     }
 
     /**
@@ -167,6 +157,26 @@ class ResponseCacheControl extends CacheControl
      */
     public function hasProxyRevalidate()
     {
-        return $this->hasFlag('proxy-revalidate');
+        return $this->hasDirective('proxy-revalidate');
+    }
+
+    /**
+     * Sets the flag for the public and private directives.
+     *
+     * @param bool $isPublic
+     * @param bool $flag
+     * @return static
+     */
+    private function withPublicPrivate($isPublic, $flag)
+    {
+        $type = $isPublic ? 'public' : 'private';
+        $otherType = $isPublic ? 'private' : 'public';
+
+        $clone = $this->withDirective($type, (bool) $flag);
+        if ($flag && $clone->hasDirective($otherType)) {
+            $clone = $clone->withDirective($otherType, false);
+        }
+
+        return $clone;
     }
 }

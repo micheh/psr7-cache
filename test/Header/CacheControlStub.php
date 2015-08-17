@@ -20,14 +20,9 @@ class CacheControlStub extends CacheControl
         return $value;
     }
 
-    public function withFlag($name, $flag)
+    public function hasDirective($name)
     {
-        return parent::withFlag($name, $flag);
-    }
-
-    public function hasFlag($name)
-    {
-        return parent::hasFlag($name);
+        return parent::hasDirective($name);
     }
 
     public function withDirective($name, $value)

@@ -97,7 +97,7 @@ abstract class CacheControl
      */
     public function withNoCache($flag = true)
     {
-        return $this->withFlag('no-cache', $flag);
+        return $this->withDirective('no-cache', (bool) $flag);
     }
 
     /**
@@ -105,7 +105,7 @@ abstract class CacheControl
      */
     public function hasNoCache()
     {
-        return $this->hasFlag('no-cache');
+        return $this->hasDirective('no-cache');
     }
 
     /**
@@ -116,7 +116,7 @@ abstract class CacheControl
      */
     public function withNoStore($flag = true)
     {
-        return $this->withFlag('no-store', $flag);
+        return $this->withDirective('no-store', (bool) $flag);
     }
 
     /**
@@ -124,7 +124,7 @@ abstract class CacheControl
      */
     public function hasNoStore()
     {
-        return $this->hasFlag('no-store');
+        return $this->hasDirective('no-store');
     }
 
     /**
@@ -135,7 +135,7 @@ abstract class CacheControl
      */
     public function withNoTransform($flag = true)
     {
-        return $this->withFlag('no-transform', $flag);
+        return $this->withDirective('no-transform', (bool) $flag);
     }
 
     /**
@@ -143,7 +143,7 @@ abstract class CacheControl
      */
     public function hasNoTransform()
     {
-        return $this->hasFlag('no-transform');
+        return $this->hasDirective('no-transform');
     }
 
     /**
@@ -195,64 +195,41 @@ abstract class CacheControl
     }
 
     /**
-     * Set a flag directive with the provided name. If the flag is `false` the directive is removed.
-     *
-     * @param string $name Name of the directive
-     * @param bool $flag Whether the directive should appear in the header
-     * @return static
-     */
-    protected function withFlag($name, $flag)
-    {
-        $clone = clone($this);
-
-        if ($flag) {
-            $clone->directives[$name] = true;
-            return $clone;
-        }
-
-        if (isset($clone->directives[$name])) {
-            unset($clone->directives[$name]);
-        }
-
-        return $clone;
-    }
-
-    /**
-     * Returns true if the Cache-Control has a flag directive and false otherwise.
-     *
-     * @param string $name Name of the directive
-     * @return bool
-     */
-    protected function hasFlag($name)
-    {
-        return isset($this->directives[$name]);
-    }
-
-    /**
      * Set a directive with the provided name and value.
      *
      * @param string $name Name of the directive
-     * @param string|int|null $value Value of the directive
+     * @param string|int|bool|null $value Value of the directive
      * @return static
      */
     protected function withDirective($name, $value)
     {
         $clone = clone($this);
 
-        if ($value !== null) {
-            if (is_int($value) && $value < 0) {
-                $value = 0;
-            }
+        if (is_numeric($value)) {
+            $value = max(0, (int) $value);
+        }
 
+        if ($value !== null && $value !== false) {
             $clone->directives[$name] = $value;
             return $clone;
         }
 
-        if (array_key_exists($name, $clone->directives)) {
+        if ($clone->hasDirective($name)) {
             unset($clone->directives[$name]);
         }
 
         return $clone;
+    }
+
+    /**
+     * Returns true if the Cache-Control has a directive and false otherwise.
+     *
+     * @param string $name Name of the directive
+     * @return bool
+     */
+    protected function hasDirective($name)
+    {
+        return array_key_exists($name, $this->directives);
     }
 
     /**
@@ -263,7 +240,7 @@ abstract class CacheControl
      */
     protected function getDirective($name)
     {
-        if (array_key_exists($name, $this->directives)) {
+        if ($this->hasDirective($name)) {
             return $this->directives[$name];
         }
 

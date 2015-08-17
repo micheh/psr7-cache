@@ -20,11 +20,11 @@ class CacheControlTest extends CacheControlTestCase
     protected $controlClass = 'MichehTest\Cache\Header\CacheControlStub';
 
     /**
-     * @covers Micheh\Cache\Header\CacheControl::withFlag
+     * @covers Micheh\Cache\Header\CacheControl::withDirective
      */
     public function testWithFlag()
     {
-        $clone = $this->cacheControl->withFlag('foo', true);
+        $clone = $this->cacheControl->withDirective('foo', true);
         $this->assertInstanceOf($this->controlClass, $clone);
 
         $this->assertAttributeSame([], 'directives', $this->cacheControl);
@@ -32,38 +32,38 @@ class CacheControlTest extends CacheControlTestCase
     }
 
     /**
-     * @covers Micheh\Cache\Header\CacheControl::withFlag
+     * @covers Micheh\Cache\Header\CacheControl::withDirective
      */
     public function testWithFlagAndFalse()
     {
-        $clone = $this->cacheControl->withFlag('foo', false);
+        $clone = $this->cacheControl->withDirective('foo', false);
         $this->assertAttributeSame([], 'directives', $clone);
     }
 
     /**
-     * @covers Micheh\Cache\Header\CacheControl::withFlag
+     * @covers Micheh\Cache\Header\CacheControl::withDirective
      */
     public function testWithFlagRemovesFlag()
     {
-        $clone = $this->cacheControl->withFlag('foo', true)->withFlag('foo', false);
+        $clone = $this->cacheControl->withDirective('foo', true)->withDirective('foo', false);
         $this->assertAttributeSame([], 'directives', $clone);
     }
 
     /**
-     * @covers Micheh\Cache\Header\CacheControl::hasFlag
+     * @covers Micheh\Cache\Header\CacheControl::hasDirective
      */
     public function testHasFlag()
     {
-        $clone = $this->cacheControl->withFlag('foo', true);
-        $this->assertTrue($clone->hasFlag('foo'));
+        $clone = $this->cacheControl->withDirective('foo', true);
+        $this->assertTrue($clone->hasDirective('foo'));
     }
 
     /**
-     * @covers Micheh\Cache\Header\CacheControl::hasFlag
+     * @covers Micheh\Cache\Header\CacheControl::hasDirective
      */
     public function testHasFlagWithoutValue()
     {
-        $this->assertFalse($this->cacheControl->hasFlag('foo'));
+        $this->assertFalse($this->cacheControl->hasDirective('foo'));
     }
 
     /**
@@ -195,7 +195,7 @@ class CacheControlTest extends CacheControlTestCase
      */
     public function testWithNoCache()
     {
-        $control = $this->getControlWithFlag('no-cache', true);
+        $control = $this->getControlWithDirective('no-cache', true);
         $this->assertReturn($control->withNoCache(true));
     }
 
@@ -213,7 +213,7 @@ class CacheControlTest extends CacheControlTestCase
      */
     public function testWithNoStore()
     {
-        $control = $this->getControlWithFlag('no-store', true);
+        $control = $this->getControlWithDirective('no-store', true);
         $this->assertReturn($control->withNoStore(true));
     }
 
@@ -231,7 +231,7 @@ class CacheControlTest extends CacheControlTestCase
      */
     public function testWithNoTransform()
     {
-        $control = $this->getControlWithFlag('no-transform', true);
+        $control = $this->getControlWithDirective('no-transform', true);
         $this->assertReturn($control->withNoTransform(true));
     }
 
@@ -279,7 +279,7 @@ class CacheControlTest extends CacheControlTestCase
      */
     public function testToStringWithFlag()
     {
-        $clone = $this->cacheControl->withFlag('foo', true);
+        $clone = $this->cacheControl->withDirective('foo', true);
         $this->assertSame('foo', (string) $clone);
     }
 
@@ -306,7 +306,7 @@ class CacheControlTest extends CacheControlTestCase
      */
     public function testToStringWithMultiple()
     {
-        $clone = $this->cacheControl->withFlag('public', true)->withDirective('foo', 20);
+        $clone = $this->cacheControl->withDirective('public', true)->withDirective('foo', 20);
         $this->assertSame('public, foo=20', (string) $clone);
     }
 
