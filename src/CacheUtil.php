@@ -40,11 +40,10 @@ class CacheUtil
      */
     public function withCache(ResponseInterface $response, $private = true, $maxAge = 600)
     {
-        $cacheControl = new ResponseCacheControl();
-        $cacheControl = $private ? $cacheControl->withPrivate() : $cacheControl->withPublic();
-        $cacheControl = $cacheControl->withMaxAge($maxAge);
+        $type = $private ? 'private' : 'public';
+        $age = max(0, (int) $maxAge);
 
-        return $this->withCacheControl($response, $cacheControl);
+        return $this->withCacheControl($response, $type . ', max-age=' . $age);
     }
 
     /**
@@ -59,10 +58,7 @@ class CacheUtil
      */
     public function withCachePrevention(ResponseInterface $response)
     {
-        $cacheControl = new ResponseCacheControl();
-        $cacheControl = $cacheControl->withNoCache()->withNoStore()->withMustRevalidate();
-
-        return $this->withCacheControl($response, $cacheControl);
+        return $this->withCacheControl($response, 'no-cache, no-store, must-revalidate');
     }
 
     /**

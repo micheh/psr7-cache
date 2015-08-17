@@ -36,11 +36,8 @@ class CacheUtilTest extends \PHPUnit_Framework_TestCase
         $util = $this->getMock('Micheh\Cache\CacheUtil', ['withCacheControl']);
         $response = $this->getResponse();
 
-        $cacheControl = new ResponseCacheControl();
-        $cacheControl = $cacheControl->withPrivate()->withMaxAge(600);
-
         $util->expects($this->once())->method('withCacheControl')
-            ->with($response, $cacheControl)
+            ->with($response, 'private, max-age=600')
             ->willReturn('phpunit');
 
         $return = $util->withCache($response);
@@ -55,10 +52,8 @@ class CacheUtilTest extends \PHPUnit_Framework_TestCase
         $util = $this->getMock('Micheh\Cache\CacheUtil', ['withCacheControl']);
         $response = $this->getResponse();
 
-        $cacheControl = new ResponseCacheControl();
-        $cacheControl = $cacheControl->withPublic()->withMaxAge(86400);
-
-        $util->expects($this->once())->method('withCacheControl')->with($response, $cacheControl);
+        $util->expects($this->once())->method('withCacheControl')
+            ->with($response, 'public, max-age=86400');
 
         $util->withCache($response, false, 86400);
     }
@@ -71,11 +66,8 @@ class CacheUtilTest extends \PHPUnit_Framework_TestCase
         $util = $this->getMock('Micheh\Cache\CacheUtil', ['withCacheControl']);
         $response = $this->getResponse();
 
-        $cacheControl = new ResponseCacheControl();
-        $cacheControl = $cacheControl->withNoCache()->withNoStore()->withMustRevalidate();
-
         $util->expects($this->once())->method('withCacheControl')
-            ->with($response, $cacheControl)
+            ->with($response, 'no-cache, no-store, must-revalidate')
             ->willReturn('phpunit');
 
         $return = $util->withCachePrevention($response);
