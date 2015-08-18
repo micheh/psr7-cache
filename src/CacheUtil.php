@@ -245,11 +245,10 @@ class CacheUtil
             $cacheControl = $this->getCacheControl($response);
 
             $lifetime = $cacheControl->getSharedMaxAge();
-            if ($lifetime !== null) {
-                return (int) $lifetime;
+            if ($lifetime === null) {
+                $lifetime = $cacheControl->getMaxAge();
             }
 
-            $lifetime = $cacheControl->getMaxAge();
             if ($lifetime !== null) {
                 return (int) $lifetime;
             }
@@ -259,7 +258,7 @@ class CacheUtil
         if ($expires) {
             $now = $response->getHeaderLine('Date');
             $now = $now ? strtotime($now) : time();
-            return strtotime($expires) - $now;
+            return max(0, strtotime($expires) - $now);
         }
 
         return null;

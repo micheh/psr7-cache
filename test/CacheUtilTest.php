@@ -431,6 +431,15 @@ class CacheUtilTest extends \PHPUnit_Framework_TestCase
     /**
      * @covers Micheh\Cache\CacheUtil::getLifetime
      */
+    public function testGetLifetimeWithExpiresInPast()
+    {
+        $response = $this->getResponseWithHeader('Expires', date('D, d M Y H:i:s', time() - 20), 1);
+        $this->assertSame(0, $this->cacheUtil->getLifetime($response));
+    }
+
+    /**
+     * @covers Micheh\Cache\CacheUtil::getLifetime
+     */
     public function testGetLifetimeWithoutAnything()
     {
         $response = $this->getResponse();
