@@ -166,7 +166,7 @@ class CacheUtil
         $eTag = $response->getHeaderLine('ETag');
         $noneMatch = $request->getHeaderLine('If-None-Match');
         if ($eTag && $noneMatch) {
-            return $noneMatch === '*' || in_array($eTag, explode(', ', $noneMatch), true);
+            return $noneMatch === '*' || in_array($eTag, preg_split('/\s*,\s*/', $noneMatch), true);
         }
 
         if (!in_array($request->getMethod(), ['GET', 'HEAD'], true)) {

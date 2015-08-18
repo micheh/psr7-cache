@@ -215,6 +215,7 @@ class CacheUtilTest extends \PHPUnit_Framework_TestCase
             'not-modified-multiple' => ['"foo", "bar"', '"bar"', true],
             'modified-multiple' => ['"foo", "bar"', '"baz"', false],
             'star' => ['*', '"foo"', true],
+            'not-modified-multiple-no-space' => ['"foo","bar"', '"bar"', true],
         ];
     }
 
