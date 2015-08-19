@@ -422,6 +422,17 @@ class CacheUtilTest extends \PHPUnit_Framework_TestCase
     /**
      * @covers Micheh\Cache\CacheUtil::getLifetime
      */
+    public function testGetLifetimeWithOtherCacheControlHeader()
+    {
+        $response = $this->getResponseWithHeader('Cache-Control', 'public', 1);
+        $response->expects($this->once())->method('hasHeader')->willReturn(true);
+
+        $this->assertNull($this->cacheUtil->getLifetime($response));
+    }
+
+    /**
+     * @covers Micheh\Cache\CacheUtil::getLifetime
+     */
     public function testGetLifetimeWithExpires()
     {
         $response = $this->getResponseWithHeader('Expires', date('D, d M Y H:i:s', time() + 20), 1);
