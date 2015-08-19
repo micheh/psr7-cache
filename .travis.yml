@@ -2,6 +2,11 @@ sudo: false
 
 language: php
 
+cache:
+  directories:
+    - vendor
+    - $HOME/.composer/cache
+
 matrix:
   fast_finish: true
   include:
