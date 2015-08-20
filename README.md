@@ -75,10 +75,11 @@ Method                | Description (see the phpDoc for more information)
 --------------------- | ------------------------------------------------------------------------
 `withCache`           | Convenience method to add a `Cache-Control` header, which allows caching
 `withCachePrevention` | Convenience method to prevent caching
-`withExpires`         | Adds an `Expires` header (date can be absolute or relative)
+`withExpires`         | Adds an `Expires` header from a timestamp, string or DateTime
+`withRelativeExpires` | Adds an `Expires` header with a specific lifetime
 `withETag`            | Adds an `ETag` header
-`withLastModified`    | Adds a `Last-Modified` header (date can be absolute or relative)
-`withCacheControl`    | Adds a `Cache-Control` header with the directives (from string or object)
+`withLastModified`    | Adds a `Last-Modified` header from a timestamp, string or DateTime
+`withCacheControl`    | Adds a `Cache-Control` header from a string or value object
 `isNotModified`       | Checks if a response is not modified
 `isCacheable`         | Checks if a response is cacheable by a public cache
 `isFresh`             | Checks if a response is fresh (age smaller than lifetime)

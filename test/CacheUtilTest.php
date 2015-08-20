@@ -107,9 +107,10 @@ class CacheUtilTest extends \PHPUnit_Framework_TestCase
      */
     public function testWithExpiresString()
     {
-        $response = $this->getResponseWithExpectedHeader('Expires', 'Mon, 10 Aug 2015 18:30:12 GMT');
+        $response = $this->getResponseWithExpectedHeader('Expires', 'Mon, 10 Aug 2015 16:30:12 GMT');
+        $date = new DateTime('2015-08-10 18:30:12', new DateTimeZone('Etc/GMT+2'));
 
-        $return = $this->cacheUtil->withExpires($response, '2015-08-10 18:30:12');
+        $return = $this->cacheUtil->withExpires($response, $date->format('Y-m-d H:i:s'));
         $this->assertEquals('phpunit', $return);
     }
 
@@ -127,16 +128,31 @@ class CacheUtilTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @covers Micheh\Cache\CacheUtil::withExpires
+     * @covers Micheh\Cache\CacheUtil::withRelativeExpires
      * @covers Micheh\Cache\CacheUtil::getTimeFromValue
      */
-    public function testWithRelativeTime()
+    public function testWithRelativeExpires()
     {
-        $date = new DateTime('@' . (time() + 300), new DateTimeZone('UTC'));
-        $response = $this->getResponseWithExpectedHeader('Expires', $date->format('D, d M Y H:i:s') . ' GMT');
+        $date = gmdate('D, d M Y H:i:s', time() + 300) . ' GMT';
+        $response = $this->getResponseWithExpectedHeader('Expires', $date);
 
-        $return = $this->cacheUtil->withExpires($response, 300, true);
+        $return = $this->cacheUtil->withRelativeExpires($response, 300);
         $this->assertEquals('phpunit', $return);
+    }
+
+
+    /**
+     * @covers Micheh\Cache\CacheUtil::withRelativeExpires
+     */
+    public function testWithRelativeExpiresAndString()
+    {
+        $response = $this->getResponse();
+
+        $this->setExpectedException(
+            'InvalidArgumentException',
+            'Expected an integer with the number of seconds, received string.'
+        );
+        $this->cacheUtil->withRelativeExpires($response, 'now');
     }
 
     /**

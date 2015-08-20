@@ -63,23 +63,49 @@ class CacheUtil
 
     /**
      * Method to add an Expires header to a PSR-7 response. Use this header if you have a specific
-     * time when the representation will expire, otherwise use the more fine-tuned Cache-Control
-     * header.
+     * time when the representation will expire, otherwise use the more fine-tuned `Cache-Control`
+     * header with the `max-age` directive. If you need to support the old HTTP/1.0 protocol and
+     * want to set a relative expiration, use the `withRelativeExpires` method.
      *
      * @see withCache
      * @see withCacheControl
-     * @see getTimeFromValue
+     * @see withRelativeExpires
      * @link https://tools.ietf.org/html/rfc7234#section-5.3
      *
      * @param ResponseInterface $response PSR-7 response to add the header to
-     * @param int|string|DateTime $time Time when the representation is expired
-     * @param bool $relative If the provided time is relative
+     * @param int|string|DateTime $time UNIX timestamp, date string or DateTime object
      * @return ResponseInterface
      * @throws InvalidArgumentException If the time could not be parsed
      */
-    public function withExpires(ResponseInterface $response, $time, $relative = false)
+    public function withExpires(ResponseInterface $response, $time)
     {
-        return $response->withHeader('Expires', $this->getTimeFromValue($time, $relative));
+        return $response->withHeader('Expires', $this->getTimeFromValue($time));
+    }
+
+    /**
+     * Method to add a relative `Expires` header to a PSR-7 response. Use this header if want to
+     * support the old HTTP/1.0 protocol and have a relative expiration time. Otherwise use the
+     * `Cache-Control` header with the `max-age` directive.
+     *
+     * @see withCache
+     * @see withCacheControl
+     * @see withExpires
+     * @link https://tools.ietf.org/html/rfc7234#section-5.3
+     *
+     * @param ResponseInterface $response PSR-7 response to add the header to
+     * @param int $seconds Number of seconds the response should be cached
+     * @return ResponseInterface
+     * @throws InvalidArgumentException If the seconds parameter is not an integer
+     */
+    public function withRelativeExpires(ResponseInterface $response, $seconds)
+    {
+        if (!is_int($seconds)) {
+            throw new InvalidArgumentException(
+                'Expected an integer with the number of seconds, received ' . gettype($seconds) . '.'
+            );
+        }
+
+        return $response->withHeader('Expires', $this->getTimeFromValue(time() + $seconds));
     }
 
     /**
@@ -111,23 +137,20 @@ class CacheUtil
      * Method to add a Last-Modified header to a PSR-7 response. Add a Last-Modified header if you
      * have an easy access to the last modified time, otherwise use only an ETag.
      *
-     * The provided time can be an UNIX timestamp, a parseable string or a DateTime instance. If the
-     * $relative parameter is `true` and the time parameter is an integer, the seconds from the time
-     * parameter will be added to the current time.
+     * The provided time can be an UNIX timestamp, a parseable string or a DateTime instance.
      *
      * @see withETag
      * @see getTimeFromValue
      * @link https://tools.ietf.org/html/rfc7232#section-2.2
      *
      * @param ResponseInterface $response PSR-7 response to add the header to
-     * @param int|string|DateTime $time Last modified time
-     * @param bool $relative If the provided time is relative
+     * @param int|string|DateTime $time UNIX timestamp, date string or DateTime object
      * @return ResponseInterface
      * @throws InvalidArgumentException If the time could not be parsed
      */
-    public function withLastModified(ResponseInterface $response, $time, $relative = false)
+    public function withLastModified(ResponseInterface $response, $time)
     {
-        return $response->withHeader('Last-Modified', $this->getTimeFromValue($time, $relative));
+        return $response->withHeader('Last-Modified', $this->getTimeFromValue($time));
     }
 
     /**
@@ -289,45 +312,37 @@ class CacheUtil
 
     /**
      * Returns a formatted timestamp of the time parameter, to use in the HTTP headers. The time
-     * parameter can be an UNIX timestamp, a parseable string or a DateTime object. If the relative
-     * parameter is true and the time parameter is an integer, the time parameter will be added to
-     * the current time.
+     * parameter can be an UNIX timestamp, a parseable string or a DateTime object.
      *
-     * @param int|string|DateTime $time Time object to create
-     * @param bool $relative Whether the provided time is relative to the current time
+     * @link https://secure.php.net/manual/en/datetime.formats.php
+     *
+     * @param int|string|DateTime $time Timestamp, date string or DateTime object
      * @return string Formatted timestamp
      * @throws InvalidArgumentException If the time could not be parsed
      */
-    protected function getTimeFromValue($time, $relative = false)
+    protected function getTimeFromValue($time)
     {
-        $format = 'D, d M Y H:i:s';
-        $value = null;
+        $format = 'D, d M Y H:i:s \G\M\T';
+
+        if (is_int($time)) {
+            return gmdate($format, $time);
+        }
 
         if (is_string($time)) {
             try {
-                $time = new DateTime($time, new DateTimeZone('UTC'));
+                $time = new DateTime($time);
             } catch (Exception $exception) {
                 // if it is an invalid date string an exception is thrown below
             }
         }
 
-        if (is_int($time)) {
-            if ($relative) {
-                $time = time() + $time;
-            }
-
-            $value = gmdate($format, $time);
-        } elseif ($time instanceof DateTime) {
+        if ($time instanceof DateTime) {
             $time = clone $time;
             $time->setTimezone(new DateTimeZone('UTC'));
-            $value = $time->format($format);
+            return $time->format($format);
         }
 
-        if (!$value) {
-            throw new InvalidArgumentException('Could not create a valid date from ' . gettype($time) . '.');
-        }
-
-        return $value . ' GMT';
+        throw new InvalidArgumentException('Could not create a valid date from ' . gettype($time) . '.');
     }
 
     /**
