@@ -111,6 +111,41 @@ class ResponseCacheControlTest extends CacheControlTestCase
     }
 
     /**
+     * @covers Micheh\Cache\Header\ResponseCacheControl::getLifetime
+     */
+    public function testGetLifetimeWithNormal()
+    {
+        $control = $this->cacheControl->withMaxAge(20);
+        $this->assertSame(20, $control->getLifetime());
+    }
+
+    /**
+     * @covers Micheh\Cache\Header\ResponseCacheControl::getLifetime
+     */
+    public function testGetLifetimeWithShared()
+    {
+        $control = $this->cacheControl->withSharedMaxAge(60);
+        $this->assertSame(60, $control->getLifetime());
+    }
+
+    /**
+     * @covers Micheh\Cache\Header\ResponseCacheControl::getLifetime
+     */
+    public function testGetLifetimeWithBoth()
+    {
+        $control = $this->cacheControl->withSharedMaxAge(60)->withMaxAge(20);
+        $this->assertSame(60, $control->getLifetime());
+    }
+
+    /**
+     * @covers Micheh\Cache\Header\ResponseCacheControl::getLifetime
+     */
+    public function testGetLifetimeWithoutDirective()
+    {
+        $this->assertNull($this->cacheControl->getLifetime());
+    }
+
+    /**
      * @covers Micheh\Cache\Header\ResponseCacheControl::withStaleWhileRevalidate
      */
     public function testWithStaleWhileRevalidate()

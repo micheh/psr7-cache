@@ -85,6 +85,23 @@ class ResponseCacheControl extends CacheControl
     }
 
     /**
+     * Returns the number of seconds the response should be cached. The method returns the shared
+     * max age if available and the normal max age otherwise. If both directives are not available,
+     * the method returns `null`.
+     *
+     * @return int|null Lifetime in seconds if available, null otherwise
+     */
+    public function getLifetime()
+    {
+        $lifetime = $this->getSharedMaxAge();
+        if ($lifetime === null) {
+            $lifetime = $this->getMaxAge();
+        }
+
+        return $lifetime;
+    }
+
+    /**
      * Set how many seconds a stale representation can be used while revalidating in the background.
      *
      * @param int $seconds

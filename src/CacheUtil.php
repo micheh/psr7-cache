@@ -265,15 +265,10 @@ class CacheUtil
     public function getLifetime(ResponseInterface $response)
     {
         if ($response->hasHeader('Cache-Control')) {
-            $cacheControl = $this->getCacheControl($response);
-
-            $lifetime = $cacheControl->getSharedMaxAge();
-            if ($lifetime === null) {
-                $lifetime = $cacheControl->getMaxAge();
-            }
+            $lifetime = $this->getCacheControl($response)->getLifetime();
 
             if ($lifetime !== null) {
-                return (int) $lifetime;
+                return $lifetime;
             }
         }
 
