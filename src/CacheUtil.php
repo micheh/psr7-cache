@@ -40,10 +40,11 @@ class CacheUtil
      */
     public function withCache(ResponseInterface $response, $public = false, $maxAge = 600)
     {
-        $type = $public ? 'public' : 'private';
-        $age = max(0, (int) $maxAge);
+        $control = new ResponseCacheControl();
+        $control = $public ? $control->withPublic() : $control->withPrivate();
+        $control = $control->withMaxAge($maxAge);
 
-        return $this->withCacheControl($response, $type . ', max-age=' . $age);
+        return $this->withCacheControl($response, $control);
     }
 
     /**
@@ -58,7 +59,10 @@ class CacheUtil
      */
     public function withCachePrevention(ResponseInterface $response)
     {
-        return $this->withCacheControl($response, 'no-cache, no-store, must-revalidate');
+        $control = new ResponseCacheControl();
+        $control = $control->withCachePrevention();
+
+        return $this->withCacheControl($response, $control);
     }
 
     /**
@@ -154,17 +158,16 @@ class CacheUtil
     }
 
     /**
-     * Method to add a Cache-Control header to the provided PSR-7 message. The cache control
-     * parameter can either be a string or a Cache-Control object.
+     * Method to add a Cache-Control header to the provided PSR-7 message.
      *
      * @link https://tools.ietf.org/html/rfc7234#section-5.2
      *
      * @param MessageInterface $message PSR-7 message to add the Cache-Control header to
-     * @param string|CacheControl $cacheControl Cache-Control string or object
+     * @param CacheControl $cacheControl Cache-Control object to add to the message
      * @return MessageInterface The PSR-7 message with the added Cache-Control header
      * @throws InvalidArgumentException If the Cache-Control header is invalid
      */
-    public function withCacheControl(MessageInterface $message, $cacheControl)
+    public function withCacheControl(MessageInterface $message, CacheControl $cacheControl)
     {
         return $message->withHeader('Cache-Control', (string) $cacheControl);
     }

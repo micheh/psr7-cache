@@ -178,6 +178,17 @@ class ResponseCacheControl extends CacheControl
     }
 
     /**
+     * Convenience method to set flags which should prevent the client from caching.
+     * Adds `no-cache, no-store, must-revalidate`.
+     *
+     * @return static
+     */
+    public function withCachePrevention()
+    {
+        return $this->withNoCache()->withNoStore()->withMustRevalidate();
+    }
+
+    /**
      * Sets the flag for the public and private directives.
      *
      * @param bool $isPublic

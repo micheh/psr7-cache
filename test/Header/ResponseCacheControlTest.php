@@ -216,4 +216,15 @@ class ResponseCacheControlTest extends CacheControlTestCase
         $control = $this->getControlWithHasFlag('proxy-revalidate');
         $this->assertReturn($control->hasProxyRevalidate());
     }
+
+    /**
+     * @covers Micheh\Cache\Header\ResponseCacheControl::withCachePrevention
+     */
+    public function testWithCachePrevention()
+    {
+        $control = $this->cacheControl->withCachePrevention();
+        $directives = ['no-cache' => true, 'no-store' => true, 'must-revalidate' => true];
+
+        $this->assertAttributeSame($directives, 'directives', $control);
+    }
 }
