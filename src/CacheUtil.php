@@ -33,14 +33,14 @@ class CacheUtil
      * @see withCacheControl
      *
      * @param ResponseInterface $response PSR-7 response to add the header to
-     * @param bool $private True for private, false for public
+     * @param bool $public True for public, false for private
      * @param int $maxAge How many seconds the response should be cached. Default: 600 (10 min)
      * @return ResponseInterface
      * @throws InvalidArgumentException If the type is invalid
      */
-    public function withCache(ResponseInterface $response, $private = true, $maxAge = 600)
+    public function withCache(ResponseInterface $response, $public = false, $maxAge = 600)
     {
-        $type = $private ? 'private' : 'public';
+        $type = $public ? 'public' : 'private';
         $age = max(0, (int) $maxAge);
 
         return $this->withCacheControl($response, $type . ', max-age=' . $age);

@@ -55,7 +55,7 @@ class CacheUtilTest extends \PHPUnit_Framework_TestCase
         $util->expects($this->once())->method('withCacheControl')
             ->with($response, 'public, max-age=86400');
 
-        $util->withCache($response, false, 86400);
+        $util->withCache($response, true, 86400);
     }
 
     /**
