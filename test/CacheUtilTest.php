@@ -108,9 +108,14 @@ class CacheUtilTest extends \PHPUnit_Framework_TestCase
     public function testWithExpiresString()
     {
         $response = $this->getResponseWithExpectedHeader('Expires', 'Mon, 10 Aug 2015 16:30:12 GMT');
-        $date = new DateTime('2015-08-10 18:30:12', new DateTimeZone('Etc/GMT+2'));
 
-        $return = $this->cacheUtil->withExpires($response, $date->format('Y-m-d H:i:s'));
+        $timezone = ini_get('date.timezone');
+        ini_set('date.timezone', 'UTC');
+
+        $return = $this->cacheUtil->withExpires($response, '2015-08-10 16:30:12');
+
+        ini_set('date.timezone', $timezone);
+
         $this->assertEquals('phpunit', $return);
     }
 
