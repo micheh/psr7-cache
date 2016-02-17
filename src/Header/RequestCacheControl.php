@@ -21,6 +21,17 @@ class RequestCacheControl extends CacheControl
     ];
 
     /**
+     * Create a new Request Cache-Control object from a header string.
+     *
+     * @param string $string
+     * @return static
+     */
+    public static function fromString($string)
+    {
+        return static::createFromString($string);
+    }
+
+    /**
      * Set how many seconds a stale representation is acceptable.
      *
      * @param int $seconds

@@ -15,6 +15,11 @@ class CacheControlStub extends CacheControl
         'custom' => 'withCustom'
     ];
 
+    public static function createFromString($string)
+    {
+        return parent::createFromString($string);
+    }
+
     public function withCustom($value)
     {
         return $value;

@@ -22,6 +22,15 @@ class ResponseCacheControlTest extends CacheControlTestCase
     protected $controlClass = 'Micheh\Cache\Header\ResponseCacheControl';
 
     /**
+     * @covers Micheh\Cache\Header\ResponseCacheControl::fromString
+     */
+    public function testFromString()
+    {
+        $control = ResponseCacheControl::fromString('max-age=100');
+        $this->assertInstanceOf($this->controlClass, $control);
+    }
+
+    /**
      * @covers Micheh\Cache\Header\ResponseCacheControl::withPublic
      * @covers Micheh\Cache\Header\ResponseCacheControl::withPublicPrivate
      */

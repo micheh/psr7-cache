@@ -39,7 +39,7 @@ abstract class CacheControl
      * @param string $string
      * @return static
      */
-    public static function fromString($string)
+    protected static function createFromString($string)
     {
         $cacheControl = new static();
 

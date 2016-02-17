@@ -25,6 +25,17 @@ class ResponseCacheControl extends CacheControl
     ];
 
     /**
+     * Create a new Response Cache-Control object from a header string.
+     *
+     * @param string $string
+     * @return static
+     */
+    public static function fromString($string)
+    {
+        return static::createFromString($string);
+    }
+
+    /**
      * Set whether a response should be cached by shared caches. The method will automatically
      * remove the private flag if it is set.
      *

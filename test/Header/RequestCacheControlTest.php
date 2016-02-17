@@ -2,6 +2,8 @@
 
 namespace MichehTest\Cache\Header;
 
+use Micheh\Cache\Header\RequestCacheControl;
+
 /**
  * @author Michel Hunziker <php@michelhunziker.com>
  * @copyright Copyright (c) 2015, Michel Hunziker <php@michelhunziker.com>
@@ -13,6 +15,15 @@ class RequestCacheControlTest extends CacheControlTestCase
      * @var string
      */
     protected $controlClass = 'Micheh\Cache\Header\RequestCacheControl';
+
+    /**
+     * @covers Micheh\Cache\Header\RequestCacheControl::fromString
+     */
+    public function testFromString()
+    {
+        $control = RequestCacheControl::fromString('max-age=100');
+        $this->assertInstanceOf($this->controlClass, $control);
+    }
 
     /**
      * @covers Micheh\Cache\Header\RequestCacheControl::withMaxStale

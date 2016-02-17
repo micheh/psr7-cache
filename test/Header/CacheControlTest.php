@@ -114,61 +114,61 @@ class CacheControlTest extends CacheControlTestCase
     }
 
     /**
-     * @covers Micheh\Cache\Header\CacheControl::fromString
+     * @covers Micheh\Cache\Header\CacheControl::createFromString
      * @covers Micheh\Cache\Header\CacheControl::getMethod
      */
     public function testFromStringWithFlag()
     {
-        $control = CacheControlStub::fromString('no-transform');
+        $control = CacheControlStub::createFromString('no-transform');
         $this->assertAttributeSame(['no-transform' => true], 'directives', $control);
     }
 
     /**
-     * @covers Micheh\Cache\Header\CacheControl::fromString
+     * @covers Micheh\Cache\Header\CacheControl::createFromString
      * @covers Micheh\Cache\Header\CacheControl::getMethod
      */
     public function testFromStringWithToken()
     {
-        $control = CacheControlStub::fromString('max-age=60');
+        $control = CacheControlStub::createFromString('max-age=60');
         $this->assertAttributeSame(['max-age' => 60], 'directives', $control);
     }
 
     /**
-     * @covers Micheh\Cache\Header\CacheControl::fromString
+     * @covers Micheh\Cache\Header\CacheControl::createFromString
      * @covers Micheh\Cache\Header\CacheControl::getMethod
      */
     public function testFromStringWithMultiple()
     {
-        $control = CacheControlStub::fromString('no-transform, max-age=100');
+        $control = CacheControlStub::createFromString('no-transform, max-age=100');
         $this->assertAttributeSame(['no-transform' => true, 'max-age' => 100], 'directives', $control);
     }
 
     /**
-     * @covers Micheh\Cache\Header\CacheControl::fromString
+     * @covers Micheh\Cache\Header\CacheControl::createFromString
      * @covers Micheh\Cache\Header\CacheControl::getMethod
      */
     public function testFromStringWithOverrideMethod()
     {
-        $this->assertSame('123', CacheControlStub::fromString('custom=123'));
+        $this->assertSame('123', CacheControlStub::createFromString('custom=123'));
     }
 
     /**
-     * @covers Micheh\Cache\Header\CacheControl::fromString
+     * @covers Micheh\Cache\Header\CacheControl::createFromString
      * @covers Micheh\Cache\Header\CacheControl::getMethod
      */
     public function testFromStringWithUnknownDirective()
     {
-        $control = CacheControlStub::fromString('foo="bar"');
+        $control = CacheControlStub::createFromString('foo="bar"');
         $this->assertAttributeSame(['foo' => 'bar'], 'directives', $control);
     }
 
     /**
-     * @covers Micheh\Cache\Header\CacheControl::fromString
+     * @covers Micheh\Cache\Header\CacheControl::createFromString
      * @covers Micheh\Cache\Header\CacheControl::getMethod
      */
     public function testFromStringWithUnknownDirectiveFlag()
     {
-        $control = CacheControlStub::fromString('foo');
+        $control = CacheControlStub::createFromString('foo');
         $this->assertAttributeSame([], 'directives', $control);
     }
 
