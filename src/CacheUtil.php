@@ -1,4 +1,10 @@
 <?php
+/**
+ * PSR-7 Cache Helpers
+ *
+ * @copyright Copyright (c) 2016, Michel Hunziker <php@michelhunziker.com>
+ * @license http://www.opensource.org/licenses/BSD-3-Clause The BSD-3-Clause License
+ */
 
 namespace Micheh\Cache;
 
@@ -14,10 +20,6 @@ use Psr\Http\Message\ResponseInterface;
 
 /**
  * Util class to add cache headers to PSR-7 HTTP messages and to parse PSR-7 cache headers.
- *
- * @author Michel Hunziker <php@michelhunziker.com>
- * @copyright Copyright (c) 2015, Michel Hunziker <php@michelhunziker.com>
- * @license http://www.opensource.org/licenses/BSD-3-Clause The BSD-3-Clause License
  */
 class CacheUtil
 {
@@ -219,7 +221,7 @@ class CacheUtil
      */
     public function isCacheable(ResponseInterface $response)
     {
-        if (!in_array($response->getStatusCode(), [200, 203, 300, 301, 302, 404, 405, 410], true)) {
+        if (!in_array($response->getStatusCode(), [200, 203, 204, /*206,*/ 300, 301, 404, 405, 410, 414, 501], true)) {
             return false;
         }
 

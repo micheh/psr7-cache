@@ -1,4 +1,10 @@
 <?php
+/**
+ * PSR-7 Cache Helpers
+ *
+ * @copyright Copyright (c) 2016, Michel Hunziker <php@michelhunziker.com>
+ * @license http://www.opensource.org/licenses/BSD-3-Clause The BSD-3-Clause License
+ */
 
 namespace Micheh\Cache\Header;
 
@@ -6,10 +12,6 @@ use InvalidArgumentException;
 
 /**
  * Base class for the Cache-Control header.
- *
- * @author Michel Hunziker <php@michelhunziker.com>
- * @copyright Copyright (c) 2015, Michel Hunziker <php@michelhunziker.com>
- * @license http://www.opensource.org/licenses/BSD-3-Clause The BSD-3-Clause License
  */
 abstract class CacheControl
 {
