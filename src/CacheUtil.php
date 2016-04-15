@@ -217,13 +217,9 @@ class CacheUtil
      */
     public function hasCurrentState(RequestInterface $request, $eTag, $lastModified = null)
     {
-        if ($eTag) {
-            $eTag = '"' . trim($eTag, '"') . '"';
-        }
-
         $ifMatch = $request->getHeaderLine('If-Match');
         if ($ifMatch) {
-            if (!$this->matchesETag($eTag, $ifMatch)) {
+            if (!$this->matchesETag($eTag, $ifMatch, false)) {
                 return false;
             }
         } else {
@@ -238,7 +234,7 @@ class CacheUtil
         }
 
         $ifNoneMatch = $request->getHeaderLine('If-None-Match');
-        if ($ifNoneMatch && $this->matchesETag($eTag, $ifNoneMatch)) {
+        if ($ifNoneMatch && $this->matchesETag($eTag, $ifNoneMatch, true)) {
             return false;
         }
 
@@ -265,7 +261,7 @@ class CacheUtil
     {
         $noneMatch = $request->getHeaderLine('If-None-Match');
         if ($noneMatch) {
-            return $this->matchesETag($response->getHeaderLine('ETag'), $noneMatch);
+            return $this->matchesETag($response->getHeaderLine('ETag'), $noneMatch, true);
         }
 
         if (!in_array($request->getMethod(), ['GET', 'HEAD'], true)) {
@@ -459,16 +455,31 @@ class CacheUtil
      *
      * @param string $currentETag The current ETag
      * @param string $requestETags The ETags from the request
+     * @param bool $weak Whether to do a weak comparison (default: strong)
      * @return bool True if the current ETag matches the ETags of the request, false otherwise
      */
-    private function matchesETag($currentETag, $requestETags)
+    private function matchesETag($currentETag, $requestETags, $weak = false)
     {
         if ($requestETags === '*') {
             return (bool) $currentETag;
         }
 
-        // TODO Add weak and strong comparison
-        return in_array($currentETag, preg_split('/\s*,\s*/', $requestETags), true);
+        if (strpos($currentETag, 'W/"') === 0) {
+            if (!$weak) {
+                return false;
+            }
+        } else {
+            $currentETag = '"' . trim($currentETag, '"') . '"';
+        }
+
+        $eTags = preg_split('/\s*,\s*/', $requestETags);
+        $match = in_array($currentETag, $eTags, true);
+        if (!$match && $weak) {
+            $other = strpos($currentETag, '"') === 0 ? 'W/' . $currentETag : substr($currentETag, 2);
+            $match = in_array($other, $eTags, true);
+        }
+
+        return $match;
     }
 
     /**

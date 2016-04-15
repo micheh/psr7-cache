@@ -276,6 +276,9 @@ class CacheUtilTest extends \PHPUnit_Framework_TestCase
             'not-current-multiple' => ['"foo", "bar"', 'baz', false],
             'star' => ['*', 'baz', true],
             'star-without-current' => ['*', null, false],
+            'weak-client' => ['W/"foo"', 'foo', false],
+            'weak-server' => ['"foo"', 'W/"foo"', false],
+            'weak-both' => ['W/"foo"', 'W/"foo"', false],
         ];
     }
 
@@ -405,6 +408,9 @@ class CacheUtilTest extends \PHPUnit_Framework_TestCase
             'star' => ['*', '"foo"', true],
             'star-without-current' => ['*', '', false],
             'not-modified-multiple-no-space' => ['"foo","bar"', '"bar"', true],
+            'weak-client' => ['W/"foo"', '"foo"', true],
+            'weak-server' => ['"foo"', 'W/"foo"', true],
+            'weak-both' => ['W/"foo"', 'W/"foo"', true],
         ];
     }
 
