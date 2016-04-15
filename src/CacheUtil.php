@@ -175,6 +175,77 @@ class CacheUtil
     }
 
     /**
+     * Checks if a request has included validators (`ETag` and/or `Last-Modified` Date) which allow
+     * to determine if the client has the current resource state. The method will check if the
+     * `If-Match` and/or `If-Unmodified-Since` header is present.
+     *
+     * This method can be used for unsafe conditional requests (neither GET nor HEAD). If the
+     * request did not include a state validator (method returns `false`), abort the execution and
+     * return a `428` http status code (or `403` if you only want to use the original status
+     * codes). If the requests includes state validators (method returns `true`), you can continue
+     * and check if the client has the current state with the `hasCurrentState` method.
+     *
+     * @see hasCurrentState
+     * @link https://tools.ietf.org/html/rfc7232#section-6
+     *
+     * @param RequestInterface $request PSR-7 request to check
+     * @return bool True if the request includes state validators, false if it has no validators
+     */
+    public function hasStateValidator(RequestInterface $request)
+    {
+        return $request->hasHeader('If-Match') || $request->hasHeader('If-Unmodified-Since');
+    }
+
+    /**
+     * Checks if the provided PSR-7 request has the current resource state. The method will check
+     * the `If-Match` and `If-Modified-Since` headers with the current ETag (and/or the Last-Modified
+     * date if provided). In addition, for a request which is not GET or HEAD, the method will check
+     * the `If-None-Match` header.
+     *
+     * Use this method to check conditional unsafe requests and to prevent lost updates. If the
+     * request does not have the current resource state (method returns `false`), abort and return
+     * status code `412`. In contrast, if the client has the current version of the resource (method
+     * returns `true`) you can safely continue the execution and update/delete the resource.
+     *
+     * @link https://tools.ietf.org/html/rfc7232#section-6
+     *
+     * @param RequestInterface $request PSR-7 request to check
+     * @param string $eTag Current ETag of the resource
+     * @param null|int|string|DateTime $lastModified Current Last-Modified date (optional)
+     * @return bool True if the request has the current resource state, false if the state is outdated
+     * @throws InvalidArgumentException If the Last-Modified date could not be parsed
+     */
+    public function hasCurrentState(RequestInterface $request, $eTag, $lastModified = null)
+    {
+        if ($eTag) {
+            $eTag = '"' . trim($eTag, '"') . '"';
+        }
+
+        $ifMatch = $request->getHeaderLine('If-Match');
+        if ($ifMatch) {
+            if (!$this->matchesETag($eTag, $ifMatch)) {
+                return false;
+            }
+        } else {
+            $ifUnmodified = $request->getHeaderLine('If-Unmodified-Since');
+            if ($ifUnmodified && !$this->matchesModified($lastModified, $ifUnmodified)) {
+                return false;
+            }
+        }
+
+        if (in_array($request->getMethod(), ['GET', 'HEAD'], true)) {
+            return true;
+        }
+
+        $ifNoneMatch = $request->getHeaderLine('If-None-Match');
+        if ($ifNoneMatch && $this->matchesETag($eTag, $ifNoneMatch)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
      * Method to check if the response is not modified and the request still has a valid cache, by
      * comparing the `ETag` headers. If no `ETag` is available and the method is GET or HEAD, the
      * `Last-Modified` header is used for comparison.
@@ -188,13 +259,13 @@ class CacheUtil
      * @param RequestInterface $request Request to check against
      * @param ResponseInterface $response Response with ETag and/or Last-Modified header
      * @return bool True if not modified, false if invalid cache
+     * @throws InvalidArgumentException If the current Last-Modified date could not be parsed
      */
     public function isNotModified(RequestInterface $request, ResponseInterface $response)
     {
-        $eTag = $response->getHeaderLine('ETag');
         $noneMatch = $request->getHeaderLine('If-None-Match');
-        if ($eTag && $noneMatch) {
-            return $noneMatch === '*' || in_array($eTag, preg_split('/\s*,\s*/', $noneMatch), true);
+        if ($noneMatch) {
+            return $this->matchesETag($response->getHeaderLine('ETag'), $noneMatch);
         }
 
         if (!in_array($request->getMethod(), ['GET', 'HEAD'], true)) {
@@ -204,7 +275,7 @@ class CacheUtil
         $lastModified = $response->getHeaderLine('Last-Modified');
         $modifiedSince = $request->getHeaderLine('If-Modified-Since');
 
-        return ($lastModified && $modifiedSince && strtotime($modifiedSince) >= strtotime($lastModified));
+        return $this->matchesModified($lastModified, $modifiedSince);
     }
 
     /**
@@ -346,6 +417,31 @@ class CacheUtil
     }
 
     /**
+     * Returns the Unix timestamp of the time parameter. The parameter can be an Unix timestamp,
+     * string or a DateTime object.
+     *
+     * @param int|string|DateTime $time
+     * @return int Unix timestamp
+     * @throws InvalidArgumentException If the time could not be parsed
+     */
+    protected function getTimestampFromValue($time)
+    {
+        if (is_int($time)) {
+            return $time;
+        }
+
+        if ($time instanceof DateTime) {
+            return $time->getTimestamp();
+        }
+
+        if (is_string($time)) {
+            return strtotime($time);
+        }
+
+        throw new InvalidArgumentException('Could not create timestamp from ' . gettype($time) . '.');
+    }
+
+    /**
      * Parses the Cache-Control header of a response and returns the Cache-Control object.
      *
      * @param ResponseInterface $response
@@ -354,5 +450,41 @@ class CacheUtil
     protected function getCacheControl(ResponseInterface $response)
     {
         return ResponseCacheControl::fromString($response->getHeaderLine('Cache-Control'));
+    }
+
+    /**
+     * Method to check if the current ETag matches the ETag of the request.
+     *
+     * @link https://tools.ietf.org/html/rfc7232#section-2.3.2
+     *
+     * @param string $currentETag The current ETag
+     * @param string $requestETags The ETags from the request
+     * @return bool True if the current ETag matches the ETags of the request, false otherwise
+     */
+    private function matchesETag($currentETag, $requestETags)
+    {
+        if ($requestETags === '*') {
+            return (bool) $currentETag;
+        }
+
+        // TODO Add weak and strong comparison
+        return in_array($currentETag, preg_split('/\s*,\s*/', $requestETags), true);
+    }
+
+    /**
+     * Method to check if the current Last-Modified date matches the date of the request.
+     *
+     * @param int|string|DateTime $currentModified Current Last-Modified date
+     * @param string $requestModified Last-Modified date of the request
+     * @return bool True if the current date matches the date of the request, false otherwise
+     * @throws InvalidArgumentException If the current date could not be parsed
+     */
+    private function matchesModified($currentModified, $requestModified)
+    {
+        if (!$currentModified) {
+            return false;
+        }
+
+        return $this->getTimestampFromValue($currentModified) <= strtotime($requestModified);
     }
 }

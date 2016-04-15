@@ -1,6 +1,6 @@
 {
     "name": "micheh/psr7-cache",
-    "description": "Cache helpers for PSR-7 HTTP Messages",
+    "description": "Cache and conditional request helpers for PSR-7 HTTP Messages",
     "type": "library",
     "license": "BSD-3-Clause",
     "keywords": [
@@ -10,7 +10,12 @@
         "psr-7",
         "http-message",
         "request",
-        "response"
+        "response",
+        "conditional",
+        "if-match",
+        "if-none-match",
+        "if-modified-since",
+        "if-unmodified-since"
     ],
     "require": {
         "php": ">=5.4",
