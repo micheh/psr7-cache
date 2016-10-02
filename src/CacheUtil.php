@@ -297,7 +297,7 @@ class CacheUtil
         }
 
         $cacheControl = $this->getCacheControl($response);
-        return !$cacheControl->hasNoStore() && !$cacheControl->isPrivate();
+        return !$cacheControl->hasNoStore() && !$cacheControl->hasNoCache() && !$cacheControl->isPrivate();
     }
 
     /**
